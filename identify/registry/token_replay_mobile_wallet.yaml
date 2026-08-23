@@ -1,0 +1,57 @@
+id: "ATK-011"
+name: "Token Replay on Mobile Wallets"
+category: "token_exploitation"
+channel: "mobile_wallet_nfc"
+severity: "HIGH"
+genai_role: "Adversary employs a conditional GAN to synthesize device cryptographic attestation environments and replay intercepted EMV token payloads with modified cryptogram parameters."
+attack_description: |
+  Mobile wallet payment tokens (Apple Pay, Google Pay) use EMV tokenization with dynamic cryptograms (e.g., dCVV / 3DS cryptograms).
+  Adversary intercepts encrypted token payloads via compromised merchant POS malware or malicious NFC relay apps.
+  Using a generative simulator that predicts token sequence numbers and cryptographic payload padding structures,
+  the attacker packages the intercepted Device Primary Account Number (DPAN) token with forged device hardware attestation tokens.
+  The transaction is replayed across high-velocity contactless transit and unattended vending terminals that operate with relaxed online risk verification.
+kill_chain:
+  - step_number: 1
+    stage_name: "Token Interception & Relay"
+    adversary_action: "Intercepts NFC token authorization packets via compromised POS tap-to-pay endpoints."
+    genai_technique: "Payload parsing and cryptogram parameter extraction."
+  - step_number: 2
+    stage_name: "Attestation & Environment Synthesis"
+    adversary_action: "Synthesizes authentic Android KeyStore / Apple Secure Enclave attestation metadata."
+    genai_technique: "Conditional GAN generating legitimate hardware fingerprint signatures."
+  - step_number: 3
+    stage_name: "Replay Injection & Extraction"
+    adversary_action: "Replays DPAN tokens across 80 contactless terminals within a 2-hour window."
+    genai_technique: "High-concurrency token replay script with geographic clustering."
+detection_signals:
+  - signal_id: "SIG-TOKEN-01"
+    indicator: "Application Transaction Counter (ATC) sequence gap or out-of-order cryptogram presentation."
+    telemetry_source: "Token Service Provider (TSP) Switch"
+    recommended_layer: "Tier 1 (Fast Tabular GBDT)"
+    evasion_difficulty: "Low"
+  - signal_id: "SIG-TOKEN-02"
+    indicator: "Simultaneous contactless transactions presented for single DPAN at distant geographic terminals (impossible travel speed)."
+    telemetry_source: "Geospatial Velocity Engine"
+    recommended_layer: "Tier 2 (Temporal Graph Neural Network)"
+    evasion_difficulty: "Medium"
+iso_mapping:
+  message_type: "pacs.008.001.08"
+  impacted_elements:
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/PmtTpInf/LclInstrm/Prtry"
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/SplmtryData/Envlp"
+  tampering_pattern: "Injection of replayed DPAN token data and forged dynamic cryptogram envelope."
+simulation_params:
+  default_intensity: 1.1
+  tunable_parameters:
+    atc_gap_size: 3
+    velocity_radius_km: 120.0
+    replay_concurrency: 8
+  synthetic_noise_level: 0.03
+  target_evasion_rate: 0.78
+evasion_strategies:
+  - "Target unattended POS terminals and transit gates where offline transaction limits apply."
+  - "Stagger replay events to fall within realistic intra-city transport transit times."
+mitigation_strategies:
+  - "Strict monotonic Application Transaction Counter (ATC) enforcement on token de-tokenization."
+  - "Hardware-enforced zero-trust Secure Element remote attestation with server-side nonces."
+real_world_precedent: "2024 Black Hat briefing demonstrating relay attacks against digital wallet tap-to-phone implementations."

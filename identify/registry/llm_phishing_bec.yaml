@@ -1,0 +1,58 @@
+id: "ATK-007"
+name: "LLM-Powered Spear Phishing & BEC"
+category: "social_engineering_bec"
+channel: "wire_swift"
+severity: "HIGH"
+genai_role: "LLM autonomously parses stolen corporate emails and vendor agreements to generate hyper-contextualized invoice redirect lures with verified CFO conversational tone."
+attack_description: |
+  Business Email Compromise (BEC) attacks historically contained stylistic giveaways or ungrounded urgency.
+  In this vector, an LLM agent ingests thousands of exfiltrated enterprise communications (procurement contracts, ERP threads).
+  It accurately extracts vendor payment schedules, outstanding purchase orders, and the exact writing style of corporate executives.
+  The agent crafts authentic, context-perfect invoice update requests with spoofed banking details (beneficiary IBAN swap)
+  that seamlessly insert into existing corporate email threads, convincing accounts payable teams to authorize multimillion-dollar supplier wires.
+kill_chain:
+  - step_number: 1
+    stage_name: "Corporate Intelligence Synthesis"
+    adversary_action: "Extracts vendor relationships, pending invoices, and CFO tone from compromised mailboxes."
+    genai_technique: "LLM retrieval-augmented extraction over corporate communications."
+  - step_number: 2
+    stage_name: "Contextual Thread Hijacking"
+    adversary_action: "Generates authentic reply in active $1.8M equipment procurement thread requesting routing update."
+    genai_technique: "Few-shot persona mimicry and formal accounting dialect synthesis."
+  - step_number: 3
+    stage_name: "Payment Redirection Clearance"
+    adversary_action: "Finance team initiates pain.001 wire to adversary-controlled offshore escrow account."
+    genai_technique: "Autonomous follow-up generation answering confirmation queries."
+detection_signals:
+  - signal_id: "SIG-BEC-01"
+    indicator: "First-time payment routing discrepancy: historical vendor beneficiary account suddenly modified for large ticket transaction."
+    telemetry_source: "Vendor Master Data & Historical Graph"
+    recommended_layer: "Tier 2 (Temporal Graph Neural Network)"
+    evasion_difficulty: "Medium"
+  - signal_id: "SIG-BEC-02"
+    indicator: "Beneficiary bank jurisdiction mismatch relative to historical vendor operational geography."
+    telemetry_source: "Payment Routing Metadata"
+    recommended_layer: "Tier 1 (Fast Tabular GBDT)"
+    evasion_difficulty: "Low"
+iso_mapping:
+  message_type: "pain.001.001.09"
+  impacted_elements:
+    - "Document/CstmrCdtTrfInitn/PmtInf/CdtTrfTxInf/Cdtr/Nm"
+    - "Document/CstmrCdtTrfInitn/PmtInf/CdtTrfTxInf/CdtrAcct/Id/IBAN"
+    - "Document/CstmrCdtTrfInitn/PmtInf/CdtTrfTxInf/RmtInf/Strd/Invcee/Nm"
+  tampering_pattern: "Customer Credit Transfer Initiation containing legitimate vendor reference but spoofed CdtrAcct IBAN."
+simulation_params:
+  default_intensity: 1.0
+  tunable_parameters:
+    invoice_amount_min: 150000.0
+    invoice_amount_max: 3500000.0
+    account_swap_timing_hours: 12.0
+  synthetic_noise_level: 0.04
+  target_evasion_rate: 0.77
+evasion_strategies:
+  - "Preserve original invoice layout, PDF metadata, and cryptographic checksum formatting."
+  - "Execute the transfer request during end-of-quarter financial closing rush."
+mitigation_strategies:
+  - "Confirmation of Payee (CoP) name-to-account verification matching company registration number."
+  - "Out-of-band cryptographic multi-signatory authorization workflow on banking portal."
+real_world_precedent: "2024 FBI IC3 Report recording $2.9B in BEC losses, citing generative AI as key accelerator."

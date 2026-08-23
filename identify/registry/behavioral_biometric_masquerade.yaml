@@ -1,0 +1,57 @@
+id: "ATK-005"
+name: "Behavioral Biometric Masquerade"
+category: "behavioral_mimicry"
+channel: "card_not_present"
+severity: "HIGH"
+genai_role: "Recurrent Generative Adversarial Networks (TimeGAN) generate human-like touch-screen swipe trajectories, keystroke dynamics, and device gyroscope tremors to defeat passive biometric bot defenses."
+attack_description: |
+  Passive behavioral biometrics analyze touchscreen swipe velocities, touch pressure, flight-time keystrokes,
+  and accelerometer micro-tremors to distinguish human users from automated scripts.
+  Adversary trains a TimeGAN on authentic mobile banking interaction datasets. During automated card-not-present checkout
+  or account login, the bot injects synthetically generated pointer events, curve trajectories (Bezier curves with physiological tremor),
+  and human-like typing latencies with simulated typing errors and corrections, rendering passive biometric scoring models completely blind.
+kill_chain:
+  - step_number: 1
+    stage_name: "Biometric Trajectory Modeling"
+    adversary_action: "Collects 10,000 baseline mobile interaction telemetry records (swipes, clicks, keystrokes)."
+    genai_technique: "Time-series Generative Adversarial Network (TimeGAN) trained on multi-sensor kinematics."
+  - step_number: 2
+    stage_name: "Synthetic Telemetry Injection"
+    adversary_action: "Injects synthetic touch events into headless mobile browser (Playwright/Appium) matching target victim distribution."
+    genai_technique: "Conditional kinematic trajectory generation with micro-tremor injection."
+  - step_number: 3
+    stage_name: "Frictionless Payment Execution"
+    adversary_action: "Navigates 3D Secure checkout; passive risk engine scores transaction as low-risk genuine human session."
+    genai_technique: "Automated payment workflow automation with human-like dwell time."
+detection_signals:
+  - signal_id: "SIG-BIO-01"
+    indicator: "Kinematic micro-inconsistencies: unnatural curvature smoothness or lack of true physiological fatigue in high-throughput sessions."
+    telemetry_source: "Mobile SDK Behavioral Sensor Stream"
+    recommended_layer: "Tier 1 (Fast Tabular GBDT)"
+    evasion_difficulty: "High"
+  - signal_id: "SIG-BIO-02"
+    indicator: "Discrepancy between simulated device motion telemetry and OS battery/thermal telemetry."
+    telemetry_source: "Device Integrity Subsystem"
+    recommended_layer: "Tier 1 (Fast Tabular GBDT)"
+    evasion_difficulty: "Medium"
+iso_mapping:
+  message_type: "pacs.008.001.08"
+  impacted_elements:
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/PmtTpInf/SvcLvl/Cd"
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/SplmtryData/Envlp"
+  tampering_pattern: "Injection of high-trust 3DS behavioral risk score assertion tokens derived from GAN-synthesized kinematic sessions."
+simulation_params:
+  default_intensity: 1.1
+  tunable_parameters:
+    keystroke_flight_jitter_ms: 45.0
+    swipe_bezier_curvature_variance: 0.12
+    gyroscope_noise_sigma: 0.03
+  synthetic_noise_level: 0.03
+  target_evasion_rate: 0.84
+evasion_strategies:
+  - "Inject simulated physiological hand fatigue and occasional typo-correction backspace sequences."
+  - "Vary touch contact radius and pressure dynamically across screen quadrants."
+mitigation_strategies:
+  - "Multi-order kinematic derivative analysis (jerk and snap analysis of touch acceleration vectors)."
+  - "Hardware-backed cryptographic attestation of sensor raw interrupt buffers."
+real_world_precedent: "2024 academic demonstrations of 'DeepMimic' bypassing top commercial behavioral biometric SDKs with 91% success."

@@ -1,0 +1,59 @@
+id: "ATK-010"
+name: "Cross-Border FX Arbitrage Layering"
+category: "cross_border_layering"
+channel: "cross_border_remittance"
+severity: "HIGH"
+genai_role: "Multi-agent LLM orchestrates lightning-fast cross-currency hops across 5 jurisdictions, exploiting settlement time lags and clearing windows to obscure audit trails before funds settle."
+attack_description: |
+  Cross-border money laundering traditionally suffered from slow manual coordination across different time zones.
+  In this vector, a distributed multi-agent system monitors real-time FX rate volatility and regional clearing window cutoffs
+  (e.g., Fedwire, CHAPS, TARGET2, UPI, SEPA Instant). The agents execute sequential currency conversions (USD -> EUR -> GBP -> SGD -> AED)
+  through fintech remittance corridors. By hopping across multiple jurisdictions within minutes, the chain exploits regulatory information-sharing
+  delays and exchange rate micro-arbitrage to fragment and obscure the illicit source before anti-money laundering watchdogs can freeze the flow.
+kill_chain:
+  - step_number: 1
+    stage_name: "Corridor & FX Settlement Arbitrage"
+    adversary_action: "Monitors cross-border liquidity rails, identifying low-friction corridors with asynchronous AML queries."
+    genai_technique: "Multi-agent market and clearing window state estimation."
+  - step_number: 2
+    stage_name: "Multi-Hop Cross-Currency Layering"
+    adversary_action: "Dispatches 5-stage currency conversion cascade across 4 international neo-banking APIs within 12 minutes."
+    genai_technique: "Automated distributed API orchestration with optimal path finding."
+  - step_number: 3
+    stage_name: "Offshore Liquidity Integration"
+    adversary_action: "Consolidates final balances into high-privacy regional accounts or non-custodial asset gateways."
+    genai_technique: "Autonomous reconciliation and multi-signature withdrawal execution."
+detection_signals:
+  - signal_id: "SIG-FX-01"
+    indicator: "Near-instantaneous currency hop sequence where funds enter in currency A and exit in currency B within <300 seconds."
+    telemetry_source: "Cross-Border Settlement Switch"
+    recommended_layer: "Tier 2 (Temporal Graph Neural Network)"
+    evasion_difficulty: "Medium"
+  - signal_id: "SIG-FX-02"
+    indicator: "High-frequency multi-corridor transfers initiated from identical device hardware signatures across disparate international IP ranges."
+    telemetry_source: "Global Device Intelligence Consortium"
+    recommended_layer: "Tier 1 (Fast Tabular GBDT)"
+    evasion_difficulty: "Low"
+iso_mapping:
+  message_type: "pacs.008.001.08"
+  impacted_elements:
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/IntrBkSttlmAmt"
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/XchgRate"
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/InstgAgt/FinInstnId/BICFI"
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/InstdAgt/FinInstnId/BICFI"
+  tampering_pattern: "Rapid sequence of pacs.008 messages across distinct currency codes (Ccy) and international BIC identifiers."
+simulation_params:
+  default_intensity: 1.3
+  tunable_parameters:
+    corridor_hop_count: 5
+    hop_latency_seconds_mean: 180.0
+    currency_pair_list: ["USD", "EUR", "GBP", "SGD", "AED"]
+  synthetic_noise_level: 0.05
+  target_evasion_rate: 0.83
+evasion_strategies:
+  - "Split the volume across multiple non-bank remittance providers (IMTOs) simultaneously."
+  - "Introduce minor synthetic delays to match typical commercial settlement windows."
+mitigation_strategies:
+  - "Cross-border ISO 20022 Unique End-to-End Transaction Reference (UETR) global graph tracking."
+  - "Real-time correspondent banking consortium telemetry sharing."
+real_world_precedent: "2024 FATF report on rapid cross-border layering using automated remittance aggregators."

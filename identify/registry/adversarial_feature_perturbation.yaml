@@ -1,0 +1,59 @@
+id: "ATK-008"
+name: "Adversarial Feature Perturbation"
+category: "adversarial_perturbation"
+channel: "card_not_present"
+severity: "HIGH"
+genai_role: "Gradient-based adversarial perturbation (FGSM/PGD) slightly shifts continuous transaction features to push fraudulent transactions across the classification boundary into the model's false-negative region."
+attack_description: |
+  Financial institutions deploy Gradient Boosted Decision Trees (GBDT) and deep tabular models for real-time fraud scoring.
+  Adversary trains a shadow surrogate classifier approximating the bank's production scoring function.
+  Using Projected Gradient Descent (PGD) and boundary-seeking heuristics under realistic business constraints
+  (e.g., amount must remain profitable, timestamps must remain plausible), the attacker calculates the minimal perturbation vector $\delta$.
+  By adjusting non-critical transaction attributes (billing ZIP code centroid, browser viewport dimensions, micro-transaction timing offsets),
+  the fraudulent transaction shifts across the decision boundary, reducing the model's output fraud probability below the block threshold (e.g. <0.30).
+kill_chain:
+  - step_number: 1
+    stage_name: "Surrogate Model Extraction"
+    adversary_action: "Queries bank API with synthetic transactions to train a high-fidelity surrogate GBDT/neural net."
+    genai_technique: "Active learning surrogate distillation with black-box membership inference."
+  - step_number: 2
+    stage_name: "Constrained Adversarial Optimization"
+    adversary_action: "Calculates optimal feature perturbation vector delta using PGD subject to domain validity constraints."
+    genai_technique: "Projected Gradient Descent on continuous tabular embeddings."
+  - step_number: 3
+    stage_name: "Evasive Transaction Clearance"
+    adversary_action: "Submits perturbed fraudulent transaction payload; scores 0.22 (benign threshold) and is auto-approved."
+    genai_technique: "Adversarial example generation for tabular payment switch features."
+detection_signals:
+  - signal_id: "SIG-ADV-01"
+    indicator: "Unusual distribution of transaction features hovering in high-density decision boundary valleys."
+    telemetry_source: "Feature Store & Model Prediction Monitor"
+    recommended_layer: "Tier 1 (Fast Tabular GBDT)"
+    evasion_difficulty: "High"
+  - signal_id: "SIG-ADV-02"
+    indicator: "Prediction discrepancy between tree-based model (GBDT) and graph-based invariant model (GNN)."
+    telemetry_source: "Multi-Tier Ensemble Consensus Engine"
+    recommended_layer: "Multi-Tier Cascaded"
+    evasion_difficulty: "High"
+iso_mapping:
+  message_type: "pacs.008.001.08"
+  impacted_elements:
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/IntrBkSttlmAmt"
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/SttlmTmReq/Tm"
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/Dbtr/PstlAdr/PstCd"
+  tampering_pattern: "Subtle mathematical shifting of continuous numerical and temporal attributes to exploit decision tree split boundaries."
+simulation_params:
+  default_intensity: 1.0
+  tunable_parameters:
+    epsilon_perturbation: 0.12
+    pgd_iterations: 20
+    surrogate_model_type: "lightgbm"
+  synthetic_noise_level: 0.02
+  target_evasion_rate: 0.89
+evasion_strategies:
+  - "Target high-importance engineered features (e.g. 24h rolling velocity, amount z-score) with calibrated offsets."
+  - "Ensure categorical values remain within legitimate domain vocabularies."
+mitigation_strategies:
+  - "Adversarial training incorporating PGD-perturbed training samples into the experience replay buffer."
+  - "Multi-model ensemble diversity combining decision trees, deep tabular networks, and topological invariants."
+real_world_precedent: "2024 academic survey on Adversarial Machine Learning vulnerability in Tier-1 card network fraud engines."

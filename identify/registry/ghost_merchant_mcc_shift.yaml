@@ -1,0 +1,59 @@
+id: "ATK-009"
+name: "Ghost Merchant & MCC Shifting"
+category: "merchant_collusion"
+channel: "card_present"
+severity: "HIGH"
+genai_role: "LLM synthesizes fictitious digital storefronts and merchant credentials with dynamic Merchant Category Code (MCC) hopping to disguise illicit card transactions as essential retail."
+attack_description: |
+  Adversary establishes clusters of shell merchant accounts ('ghost merchants') with payment aggregators.
+  Generative models create authentic e-commerce storefronts, terms of service, customer reviews, and product catalogs.
+  An autonomous merchant manager monitors chargeback rates and acquiring risk thresholds.
+  When an MCC (e.g. 5732 Electronics or 7995 Gambling) triggers elevated transaction monitoring,
+  the agent dynamically shifts the terminal registration to low-risk codes (e.g. 5411 Grocery Stores, 5812 Restaurants, 5942 Bookstores),
+  laundering stolen card authorizations through seemingly mundane everyday commerce.
+kill_chain:
+  - step_number: 1
+    stage_name: "Synthetic Merchant Fabrications"
+    adversary_action: "Generates 15 functional web storefronts with registered corporate domains and tax IDs."
+    genai_technique: "Full-stack generative web synthesis with AI-generated brand identities."
+  - step_number: 2
+    stage_name: "Aggregator Onboarding & MCC Provisioning"
+    adversary_action: "Passes automated acquiring underwriting; acquires 45 terminal IDs across varied MCC codes."
+    genai_technique: "Synthetic documentation submission and automated merchant underwriting clearance."
+  - step_number: 3
+    stage_name: "Dynamic MCC Traffic Shifting"
+    adversary_action: "Routes $800,000 in card cash-outs through low-risk merchant terminals, cycling codes every 72 hours."
+    genai_technique: "Automated routing policy shifting terminal IDs based on acquirer risk feedback."
+detection_signals:
+  - signal_id: "SIG-GHOST-01"
+    indicator: "Severe ticket size anomaly for registered MCC (e.g. $1,450 average ticket on MCC 5411 Grocery)."
+    telemetry_source: "Acquiring Payment Switch"
+    recommended_layer: "Tier 1 (Fast Tabular GBDT)"
+    evasion_difficulty: "Low"
+  - signal_id: "SIG-GHOST-02"
+    indicator: "Bipartite cardholder-merchant graph showing rapid migration of the same card clusters across newly activated merchant IDs."
+    telemetry_source: "Bipartite Transaction Graph"
+    recommended_layer: "Tier 2 (Temporal Graph Neural Network)"
+    evasion_difficulty: "High"
+iso_mapping:
+  message_type: "pacs.008.001.08"
+  impacted_elements:
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/Cdtr/Id/OrgId/Othr/Id"
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/Purp/Prtry"
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/SplmtryData/Envlp"
+  tampering_pattern: "Manipulation of merchant identifier and proprietary merchant category classification in clearing records."
+simulation_params:
+  default_intensity: 1.2
+  tunable_parameters:
+    num_ghost_terminals: 15
+    mcc_rotation_interval_hours: 48.0
+    ticket_size_multiplier: 4.5
+  synthetic_noise_level: 0.05
+  target_evasion_rate: 0.76
+evasion_strategies:
+  - "Split large charges into typical grocery basket amounts ($40 - $120) with high concurrency."
+  - "Maintain low chargeback ratio by processing a portion of legitimate prepaid card transactions."
+mitigation_strategies:
+  - "Real-time merchant peer-group distribution scoring comparing transaction size vs regional MCC baseline."
+  - "Merchant website web-crawling and live domain reputation validation."
+real_world_precedent: "2024 Interpol operation dismantling transnational ghost merchant syndicate laundering $40M."

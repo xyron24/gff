@@ -1,0 +1,59 @@
+id: "ATK-002"
+name: "Deepfake Voice Authorization"
+category: "voice_biometric_spoofing"
+channel: "wire_swift"
+severity: "CRITICAL"
+genai_role: "Zero-shot generative neural voice synthesis clones executive vocal timbre, acoustic cadence, and micro-prosody in real time to bypass phone-banking authorization gates for high-value SWIFT wires."
+attack_description: |
+  Adversary leverages 3 seconds of scraped public executive audio (keynote speeches, earnings calls)
+  to train a zero-shot diffusion-based voice cloning model. During an interactive voice response (IVR) or
+  high-value callback verification with a private bank's wire desk, a conversational LLM agent engages in natural
+  multi-turn dialogue, generating synthetic speech with injected ambient office noise and emotional inflection
+  to authorize a high-value commercial credit transfer.
+kill_chain:
+  - step_number: 1
+    stage_name: "Audio Harvesting & Acoustic Profiling"
+    adversary_action: "Scrapes podcast and webinar recordings of corporate treasurer; extracts high-fidelity speech samples."
+    genai_technique: "Diffusion-based zero-shot voice cloning and fundamental frequency (F0) matching."
+  - step_number: 2
+    stage_name: "Conversational Scripting & Persona Adaptation"
+    adversary_action: "Fine-tunes an LLM on banking terminology, account verification protocol, and urgent business context."
+    genai_technique: "Context-grounded Low-Rank Adaptation (LoRA) LLM with live speech-to-speech pipeline."
+  - step_number: 3
+    stage_name: "Live IVR / Operator Penetration"
+    adversary_action: "Executes real-time duplex audio call to payment switch confirmation desk; authorizes $2.4M urgent vendor wire."
+    genai_technique: "Sub-200ms latency streaming TTS with dynamic phonetic latency compensation."
+detection_signals:
+  - signal_id: "SIG-VOICE-01"
+    indicator: "Phase vocoder phase-incoherence artifacts and synthetic high-frequency spectral flatness (>16kHz)."
+    telemetry_source: "Voice Biometric Telemetry & Audio Spectrogram"
+    recommended_layer: "Tier 1 (Fast Tabular GBDT)"
+    evasion_difficulty: "Medium"
+  - signal_id: "SIG-VOICE-02"
+    indicator: "Out-of-band wire authorization request accompanied by recent executive geolocation/device mismatch."
+    telemetry_source: "Multi-factor Context Ledger"
+    recommended_layer: "Tier 2 (Temporal Graph Neural Network)"
+    evasion_difficulty: "High"
+iso_mapping:
+  message_type: "pain.001.001.09"
+  impacted_elements:
+    - "Document/CstmrCdtTrfInitn/PmtInf/Dbtr/Nm"
+    - "Document/CstmrCdtTrfInitn/PmtInf/CdtTrfTxInf/Amt/InstdAmt"
+    - "Document/CstmrCdtTrfInitn/PmtInf/CdtTrfTxInf/Authrstn/Cd"
+  tampering_pattern: "High-value customer credit transfer initiation (pain.001) triggered via spoofed biometric authorization tokens."
+simulation_params:
+  default_intensity: 1.0
+  tunable_parameters:
+    amount_min: 250000.0
+    amount_max: 5000000.0
+    voice_spectral_similarity: 0.96
+    authorization_channel: "telephony_callback"
+  synthetic_noise_level: 0.04
+  target_evasion_rate: 0.88
+evasion_strategies:
+  - "Inject realistic acoustic background noise (e.g. airport lounge, typing, HVAC hum) to mask vocoder phase discrepancies."
+  - "Introduce conversational disfluencies ('uhm', pauses, false starts) to mimic human cognitive processing."
+mitigation_strategies:
+  - "Multi-modal cryptographic token challenge over secure push channel prior to payment clearance."
+  - "Phonetic liveness verification using dynamic challenge phrases with non-linear phonetic acoustic resonance analysis."
+real_world_precedent: "2024 Hong Kong multinational firm $25M deepfake CFO video/voice conference wire transfer fraud."

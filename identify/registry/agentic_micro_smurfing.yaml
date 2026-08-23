@@ -1,0 +1,62 @@
+id: "ATK-001"
+name: "Agentic Micro-Smurfing"
+category: "structuring"
+channel: "card_not_present"
+severity: "HIGH"
+genai_role: "Autonomous LLM planner decomposes illicit capital into adaptive sub-threshold micro-transactions across rotating synthetic accounts, learning evasion bounds from prior blocks."
+attack_description: |
+  An autonomous Agentic AI framework orchestrates high-volume structuring (micro-smurfing).
+  Instead of static splitting, the agent observes transaction settlement thresholds (e.g. $10,000 CTR or $200 velocity limits),
+  dynamically samples micro-amounts ($12.50 to $185.00) using Dirichlet distributions, introduces randomized inter-arrival jitter,
+  and distributes payments across hundreds of synthetic destination wallets. If a particular transaction pattern gets challenged
+  or declined, the agent updates its splitting policy in real time to route through alternate rails and merchant categories.
+kill_chain:
+  - step_number: 1
+    stage_name: "Reconnaissance & Policy Extraction"
+    adversary_action: "Agent queries API endpoints with probe transactions to identify velocity thresholds and AML limits."
+    genai_technique: "LLM-driven exploratory black-box probing and response code parsing."
+  - step_number: 2
+    stage_name: "Decomposition & Account Allocation"
+    adversary_action: "Deconstructs $50,000 illicit balance into 420 micro-payments across 35 synthetic mule wallets."
+    genai_technique: "Constrained Dirichlet sampling with temporal jittering."
+  - step_number: 3
+    stage_name: "Adaptive Execution & Feedback Loop"
+    adversary_action: "Dispatches transactions with randomized MCC tags and payment descriptions; adjusts amounts if friction occurs."
+    genai_technique: "Reinforcement Learning agent updating transaction timing and amount policies."
+detection_signals:
+  - signal_id: "SIG-SMURF-01"
+    indicator: "High out-degree fan-out from single funding cluster to synthetic account subgraph within 24h window."
+    telemetry_source: "Graph Ledger / PyG Temporal Adjacency"
+    recommended_layer: "Tier 2 (Temporal Graph Neural Network)"
+    evasion_difficulty: "High"
+  - signal_id: "SIG-SMURF-02"
+    indicator: "Dense concentration of transaction amounts in the 85th-98th percentile of non-reporting thresholds."
+    telemetry_source: "Tabular Payment Switch Stream"
+    recommended_layer: "Tier 1 (Fast Tabular GBDT)"
+    evasion_difficulty: "Medium"
+iso_mapping:
+  message_type: "pacs.008.001.08"
+  impacted_elements:
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/IntrBkSttlmAmt"
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/CdtrAcct/Id/Othr/Id"
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/Purp/Cd"
+  tampering_pattern: "Rapid sequence of pacs.008 messages with randomized IntrBkSttlmAmt under 200 EUR/USD with rotating CdtrAcct identifiers."
+simulation_params:
+  default_intensity: 1.2
+  tunable_parameters:
+    num_splits_min: 50
+    num_splits_max: 300
+    amount_min: 10.0
+    amount_max: 199.99
+    time_window_hours: 24.0
+    mcc_diversity_ratio: 0.8
+  synthetic_noise_level: 0.08
+  target_evasion_rate: 0.82
+evasion_strategies:
+  - "Jitter transaction arrival times with Poisson point processes."
+  - "Inject legitimate small merchant purchases (e.g. coffee, digital streaming) between smurfing transfers."
+  - "Rotate originating virtual card numbers (VCNs) issued under distinct BIN ranges."
+mitigation_strategies:
+  - "Temporal dynamic graph neural network aggregation tracking cumulative 7-day flow between entity clusters."
+  - "Entropy-based MCC shift detection on newly provisioned debit rails."
+real_world_precedent: "2024 FINCEN advisory on AI-automated micro-structuring via real-time P2P rails."

@@ -1,0 +1,59 @@
+id: "ATK-006"
+name: "Dynamic Mule Cycle Rings"
+category: "graph_mule_orchestration"
+channel: "p2p_realtime"
+severity: "CRITICAL"
+genai_role: "Graph Reinforcement Learning orchestrates a non-stationary topology of money mule accounts, dynamically adding decoy edges and rewiring cycles to minimize graph-centrality and cycle-detection scores."
+attack_description: |
+  Traditional money mule networks use static circular or tree topologies (Layering -> Integration)
+  which are readily detected by graph algorithms (Tarjan's cycle detection, PageRank spikes, Louvain community clustering).
+  In this vector, an autonomous Graph RL agent actively senses graph metrics. It continuously provisions ephemeral accounts,
+  injects benign cross-transfers (decoy transactions), splits cycles into disjoint paths with delayed consolidation nodes,
+  and rotates intermediate nodes every 48 hours to evade temporal graph neural networks and flow-tracing heuristics.
+kill_chain:
+  - step_number: 1
+    stage_name: "Ephemeral Node Provisioning"
+    adversary_action: "Recruits or synthesizes 60 digital wallet accounts across 4 distinct regional P2P rails."
+    genai_technique: "LLM-driven synthetic onboarding and identity generation."
+  - step_number: 2
+    stage_name: "Decoy Flow Injection & Graph Camouflage"
+    adversary_action: "Injects hundreds of micro-transactions between mule accounts and benign public merchants."
+    genai_technique: "Graph RL optimizing structural entropy to mimic authentic social payment graphs."
+  - step_number: 3
+    stage_name: "Disjoint Multi-Hop Extraction"
+    adversary_action: "Routes $350,000 illicit inflow through 8-hop dynamic DAG paths into offshore liquidity endpoints."
+    genai_technique: "Dynamic flow path allocation with time-decayed graph re-weighting."
+detection_signals:
+  - signal_id: "SIG-MULE-01"
+    indicator: "Rapid temporal flow velocity: funds entering account and exiting within <180 seconds across multi-hop chains."
+    telemetry_source: "Temporal Flow Ledger"
+    recommended_layer: "Tier 2 (Temporal Graph Neural Network)"
+    evasion_difficulty: "Medium"
+  - signal_id: "SIG-MULE-02"
+    indicator: "Near-zero balance retention across a cluster of interconnected accounts with high transaction throughput."
+    telemetry_source: "Tabular Core Banking Ledger"
+    recommended_layer: "Tier 1 (Fast Tabular GBDT)"
+    evasion_difficulty: "Low"
+iso_mapping:
+  message_type: "pacs.008.001.08"
+  impacted_elements:
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/DbtrAcct/Id/IBAN"
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/CdtrAcct/Id/IBAN"
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/SttlmTmIndctn/CdtDtTm"
+  tampering_pattern: "Cascading sequences of inter-bank pacs.008 instant credit transfers exhibiting minimal dwell time."
+simulation_params:
+  default_intensity: 1.4
+  tunable_parameters:
+    num_mule_nodes: 40
+    path_hop_length: 6
+    dwell_time_seconds_mean: 90.0
+    decoy_edge_ratio: 0.35
+  synthetic_noise_level: 0.06
+  target_evasion_rate: 0.81
+evasion_strategies:
+  - "Inject asymmetric decoy edges to disrupt cycle detection invariants."
+  - "Stagger hop execution across multiple time zones and banking business hours."
+mitigation_strategies:
+  - "Continuous-time dynamic graph neural networks (e.g. CaT-GNN) tracking temporal edge sequences."
+  - "Multi-bank collaborative flow analytics computing conserved value flows regardless of hop count."
+real_world_precedent: "2024 European Cybercrime Centre (EC3) operational report on AI-coordinated transnational mule networks."

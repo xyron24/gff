@@ -1,0 +1,59 @@
+id: "ATK-012"
+name: "Real-Time ATO via Session Hijack"
+category: "account_takeover"
+channel: "open_banking_api"
+severity: "CRITICAL"
+genai_role: "Agentic bot performs reverse-proxy Adversary-in-the-Middle (AiTM) credential interception, extracts session cookies and OAuth tokens, and executes instantaneous balance drainage via Open Banking APIs before session revocation."
+attack_description: |
+  Adversary deploys an LLM-assisted reverse proxy phishing infrastructure (Evilginx-style).
+  Victim is lured into authenticating to their banking portal; the proxy intercepts the active session cookie,
+  OAuth 2.0 refresh token, and biometric passkey session. Immediately upon token capture, an autonomous AI agent
+  ingests the session, connects to the bank's Open Banking Payment Initiation Service Provider (PISP) API endpoints,
+  bypasses secondary step-up authentication using the stolen session context, and executes high-speed automated fund drainage
+  to instant P2P recipient endpoints within seconds—well before the victim realizes their session was hijacked.
+kill_chain:
+  - step_number: 1
+    stage_name: "AiTM Session Interception"
+    adversary_action: "Captures authenticated session cookie and OAuth bearer tokens via real-time reverse proxy."
+    genai_technique: "Context-aware automated phishing proxy with dynamic MFA relay."
+  - step_number: 2
+    stage_name: "API Session Ingestion & Inspection"
+    adversary_action: "Agent parses available balances, linked accounts, and daily transfer limits in 800ms."
+    genai_technique: "Autonomous API interaction agent navigating Open Banking endpoints."
+  - step_number: 3
+    stage_name: "Instant Balance Drainage"
+    adversary_action: "Initiates maximum authorized instant payment to pre-staged mule account; exhausts balance."
+    genai_technique: "Sub-second API payload formulation and automated clearance."
+detection_signals:
+  - signal_id: "SIG-ATO-01"
+    indicator: "IP address and ASN hop between login session creation and instant payment initiation within single session."
+    telemetry_source: "Session & Gateway Access Logs"
+    recommended_layer: "Tier 1 (Fast Tabular GBDT)"
+    evasion_difficulty: "Low"
+  - signal_id: "SIG-ATO-02"
+    indicator: "Immediate payment transfer initiated <5 seconds after initial login on an unfamiliar device fingerprint."
+    telemetry_source: "User Session Temporal Graph"
+    recommended_layer: "Tier 2 (Temporal Graph Neural Network)"
+    evasion_difficulty: "Medium"
+iso_mapping:
+  message_type: "pain.001.001.09"
+  impacted_elements:
+    - "Document/CstmrCdtTrfInitn/GrpHdr/InitgPty/Id/OrgId/Othr/Id"
+    - "Document/CstmrCdtTrfInitn/PmtInf/DbtrAcct/Id/IBAN"
+    - "Document/CstmrCdtTrfInitn/PmtInf/CdtTrfTxInf/Amt/InstdAmt"
+  tampering_pattern: "High-velocity Customer Credit Transfer Initiation generated via hijacked OAuth authorization header."
+simulation_params:
+  default_intensity: 1.5
+  tunable_parameters:
+    session_age_seconds_at_drain: 4.5
+    drain_percentage_of_balance: 0.98
+    ip_asn_mismatch: true
+  synthetic_noise_level: 0.04
+  target_evasion_rate: 0.86
+evasion_strategies:
+  - "Route the API requests through a residential proxy matching the victim's local ISP and geographic city."
+  - "Mimic human page browsing and account statement viewing for 60 seconds prior to initiating the payment."
+mitigation_strategies:
+  - "FIDO2 / WebAuthn device-bound passkeys immune to reverse proxy AiTM interception."
+  - "Continuous risk-based session evaluation monitoring TCP fingerprint and TLS JA3/JA4 hash consistency."
+real_world_precedent: "2024 Microsoft Threat Intelligence report on 300% surge in AiTM token theft targeting financial services."

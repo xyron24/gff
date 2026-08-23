@@ -1,0 +1,59 @@
+id: "ATK-003"
+name: "Synthetic Identity Bust-Out"
+category: "identity_synthesis"
+channel: "card_not_present"
+severity: "CRITICAL"
+genai_role: "Diffusion models generate photorealistic utility bills and national IDs, while LLMs maintain autonomous personas that build 18-month credit history before an orchestrated multi-lender bust-out."
+attack_description: |
+  Adversary synthesizes chimeric identities combining unissued SSN/National IDs with GenAI-fabricated personas.
+  Generative diffusion models fabricate authentic KYC verification artifacts (driver's licenses, utility invoices, pay stubs)
+  that bypass document verification engines. LLM agents manage automated micro-spend and prompt repayments across 12-18 months
+  to artificially elevate credit scores to >750. In a synchronized zero-hour event, the agents max out credit lines ($25,000 to $100,000 each)
+  via high-liquidity merchant categories and instant cash-out corridors, abandoning the accounts.
+kill_chain:
+  - step_number: 1
+    stage_name: "Chimeric Identity Synthesis"
+    adversary_action: "Creates 50 synthetic identities matching unassigned SSN ranges and geographic credit profiles."
+    genai_technique: "Conditional diffusion image synthesis for KYC documents; LLM bio/address generator."
+  - step_number: 2
+    stage_name: "Credit Nurturing & Piggybacking"
+    adversary_action: "Executes recurring utility and grocery micro-payments; pays balances in full over 12 months."
+    genai_technique: "Autonomous behavioral simulation scripts mimicking prime borrower expenditure curves."
+  - step_number: 3
+    stage_name: "Synchronized Bust-Out Execution"
+    adversary_action: "Simultaneously initiates maximum credit-limit draws across all 50 accounts within a 4-hour window."
+    genai_technique: "Coordinated multi-agent API execution across multiple merchant terminals."
+detection_signals:
+  - signal_id: "SIG-SYNTH-01"
+    indicator: "Sudden 400%+ velocity and utilization spike on aged low-velocity credit lines."
+    telemetry_source: "Account Utilization Ledger"
+    recommended_layer: "Tier 1 (Fast Tabular GBDT)"
+    evasion_difficulty: "Medium"
+  - signal_id: "SIG-SYNTH-02"
+    indicator: "Dense shared latent attributes (device canvas fingerprints, IP subnets, synthetic employer names) across distinct accounts."
+    telemetry_source: "Identity Knowledge Graph"
+    recommended_layer: "Tier 2 (Temporal Graph Neural Network)"
+    evasion_difficulty: "High"
+iso_mapping:
+  message_type: "pacs.008.001.08"
+  impacted_elements:
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/Dbtr/Id/PrvtId/Othr/Id"
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/IntrBkSttlmAmt"
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/PmtTpInf/LclInstrm/Cd"
+  tampering_pattern: "Surge of maximum authorized customer credit transfers across clusters of newly accelerated synthetic borrower lines."
+simulation_params:
+  default_intensity: 1.5
+  tunable_parameters:
+    nurturing_duration_months: 12
+    bustout_window_hours: 4.0
+    credit_limit_mean: 45000.0
+    cluster_size: 25
+  synthetic_noise_level: 0.05
+  target_evasion_rate: 0.79
+evasion_strategies:
+  - "Stagger bust-out transactions across diverse MCCs (luxury electronics, jewelry, crypto ramps)."
+  - "Maintain varied device user-agents and rotating residential proxy IP networks during nurturing."
+mitigation_strategies:
+  - "Graph-based synthetic identity cluster detection analyzing bipartite graph of identity attributes and phone records."
+  - "Cross-institution credit-line draw velocity monitoring using privacy-preserving federated analytics."
+real_world_precedent: "2024 Federal Reserve study estimating $6B+ annual U.S. banking losses from synthetic identity credit bust-outs."

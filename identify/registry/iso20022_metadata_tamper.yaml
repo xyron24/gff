@@ -1,0 +1,59 @@
+id: "ATK-004"
+name: "ISO 20022 Metadata Tampering"
+category: "metadata_tampering"
+channel: "wire_swift"
+severity: "HIGH"
+genai_role: "LLM specialized in banking XML XSD schemas crafts adversarial unstructured remittance text and nested tags that exploit parser differential behaviors between payment switches and AML screening filters."
+attack_description: |
+  With global payment migration to ISO 20022 (pacs.008, pacs.009, pain.001), rich structured remittance data (RmtInf)
+  and nested regulatory fields are transmitted. Adversary leverages an LLM to generate syntactically valid XML snippets
+  that introduce parser differentials between the core payment execution engine and the downstream AML/Sanctions screening engine.
+  Techniques include homoglyphic Unicode substitution in debtor/creditor names, semantic obfuscation in unstructured remittance fields (Ustrd),
+  and injection of misleading purpose codes (Purp/Cd) that evade automated sanctions screening while preserving transaction routing.
+kill_chain:
+  - step_number: 1
+    stage_name: "Parser Differential Profiling"
+    adversary_action: "Probes intermediary bank parsers with edge-case ISO 20022 XML payloads to detect sanitization variances."
+    genai_technique: "Grammar-based fuzzer guided by LLM-generated XSD mutation rules."
+  - step_number: 2
+    stage_name: "Adversarial Remittance Crafting"
+    adversary_action: "Generates pacs.008 message where designated entity names are encoded with lookalike Cyrillic/Greek glyphs and benign commercial tokens."
+    genai_technique: "Adversarial token substitution with zero-width non-breaking spaces and semantic paraphrasing."
+  - step_number: 3
+    stage_name: "Switch Routing & Execution"
+    adversary_action: "Submits high-value cross-border transfer through RTGS rail; bypasses screening while clearing directly."
+    genai_technique: "Automated ISO 20022 message constructor validating schema integrity."
+detection_signals:
+  - signal_id: "SIG-ISO-01"
+    indicator: "Presence of mixed-script Unicode glyphs, zero-width codepoints, or unnormalized UTF-8 in RmtInf or Dbtr/Nm tags."
+    telemetry_source: "ISO 20022 XML Message Ingestion Engine"
+    recommended_layer: "Tier 1 (Fast Tabular GBDT)"
+    evasion_difficulty: "Low"
+  - signal_id: "SIG-ISO-02"
+    indicator: "Semantic dissonance between structured purpose code (e.g. GDDS/commercial goods) and recipient account profile."
+    telemetry_source: "Semantic Knowledge Engine"
+    recommended_layer: "Tier 3 (Cognitive SAR Explainer / Policy)"
+    evasion_difficulty: "High"
+iso_mapping:
+  message_type: "pacs.008.001.08"
+  impacted_elements:
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/RmtInf/Ustrd"
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/Dbtr/Nm"
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/Cdtr/Nm"
+    - "Document/FIToFICstmrCdtTrf/CdtTrfTxInf/Purp/Cd"
+  tampering_pattern: "Injection of adversarial remittance strings and mixed-script Unicode encodings within RmtInf and Dbtr elements."
+simulation_params:
+  default_intensity: 1.0
+  tunable_parameters:
+    homoglyph_replacement_rate: 0.15
+    zero_width_space_injection: true
+    purpose_code_spoofing: true
+  synthetic_noise_level: 0.02
+  target_evasion_rate: 0.85
+evasion_strategies:
+  - "Use exact matching ISO 20022 external code sets while subtly altering underlying textual descriptions."
+  - "Distribute sanctioned name tokens across multiple unstructured lines (`<Ustrd>`) to break regex extractors."
+mitigation_strategies:
+  - "Strict canonicalization and Unicode NFKC normalization prior to AML token extraction."
+  - "Dual-parser cross-validation asserting equivalence between routing and screening AST representations."
+real_world_precedent: "2024 SWIFT ISO 20022 implementation guidelines alerting on homoglyph evasion in CBPR+ messaging."
