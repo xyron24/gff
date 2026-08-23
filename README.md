@@ -34,82 +34,32 @@ Evaluated on standard edge switch CPU infrastructure without specialized GPU har
 ## 🏛️ System Architecture
 
 ```mermaid
-flowchart TD
-    classDef redTeam fill:#131722,stroke:#EF4444,stroke-width:1.5px,color:#F87171;
-    classDef blueTeam fill:#131722,stroke:#38BDF8,stroke-width:1.5px,color:#38BDF8;
-    classDef closedLoop fill:#131722,stroke:#FF5F00,stroke-width:1.5px,color:#FF5F00;
-    classDef storage fill:#0B0E14,stroke:#2D3748,stroke-width:1px,color:#94A3B8;
-    classDef decision fill:#1A1F2C,stroke:#F59E0B,stroke-width:1.5px,color:#FBBF24;
-
-    subgraph Pillar12["🔴 RED TEAM: IDENTIFY & GENERATE"]
-        Taxonomy["Threat Taxonomy Registry<br/>(12 GenAI Attack Cards ATK-001..012)"]:::redTeam
-        RedAgent["RL Evasion Policy Agent<br/>(Boltzmann Softmax Q-Learning)"]:::redTeam
-        BaseGen["Empirical Baseline Synthesizer<br/>(Poisson Arrival • Benford Mixture)"]:::redTeam
-        Injectors["12 Modular Attack Injectors<br/>(Smurfing • Biometrics • Mule Rings)"]:::redTeam
-        ISOGen["ISO 20022 Serialization<br/>(pacs.008 • pain.001 XML)"]:::storage
-        GraphGen["Temporal Graph Builder<br/>(Account • Merchant • Device • IP)"]:::storage
+graph TB
+    subgraph "Pillar 1: IDENTIFY (Red Team Research)"
+        A1["Threat Taxonomy Engine"] --> A2["12 Attack Card Registry (YAML)"]
     end
 
-    RedAgent -->|Adaptive Weights| Injectors
-    Taxonomy --> Injectors
-    BaseGen --> Injectors
-    Injectors --> ISOGen
-    Injectors --> GraphGen
-
-    subgraph Pillar3["🔵 BLUE TEAM: DEFEND (Sub-30ms Cascading Grid)"]
-        FeatExt["Streaming Feature Extractor<br/>(24 Tabular Signals + Graph Invariants)"]:::blueTeam
-        Tier1["Tier 1: Fast Histogram GBDT<br/>(Latency: 0.85 ms P99)"]:::blueTeam
-        Tier1Gate{"T1 Risk Score<br/>Evaluation"}:::decision
-        Tier2["Tier 2: Relational DyGNN<br/>(Latency: 14.2 ms P99)"]:::blueTeam
-        Tier2Gate{"Composite Score<br/>> 0.60?"}:::decision
-        Tier3["Tier 3: Cognitive SAR Explainer<br/>(Async LLM FinCEN Narrative)"]:::blueTeam
-        
-        ApproveFast["AUTO-APPROVE<br/>(< 1.0 ms Fast Path)"]:::storage
-        BlockFast["AUTO-BLOCK<br/>(< 1.0 ms Fast Path)"]:::storage
-        ApproveTier2["APPROVED<br/>(< 18.4 ms Cascade)"]:::storage
-        BlockTier2["CHALLENGE / BLOCK<br/>(< 18.4 ms Cascade)"]:::storage
+    subgraph "Pillar 2: GENERATE (Adversarial Simulation)"
+        B1["Baseline Legitimate Generator<br/>(Poisson & Multivariate Mixture)"] --> B2["12 Modular Attack Injectors"]
+        B2 --> B3["ISO 20022 Formatter<br/>(pacs.008, pain.001 XML)"]
+        B3 --> B4["Temporal Heterogeneous Graph Builder"]
     end
 
-    ISOGen --> FeatExt
-    GraphGen --> FeatExt
-    FeatExt --> Tier1
-    Tier1 --> Tier1Gate
-    
-    Tier1Gate -->|< 0.25| ApproveFast
-    Tier1Gate -->|> 0.85| BlockFast
-    Tier1Gate -->|0.25 - 0.85 (Ambiguous)| Tier2
-    
-    Tier2 --> Tier2Gate
-    Tier2Gate -->|No| ApproveTier2
-    Tier2Gate -->|Yes| BlockTier2
-    
-    BlockFast -.->|Async Trigger| Tier3
-    BlockTier2 -.->|Async Trigger| Tier3
-
-    subgraph FeedbackLoop["🔄 CLOSED-LOOP CO-EVOLUTION ENGINE"]
-        FNMiner["False-Negative Miner<br/>(Detects is_fraud=1 & score < 0.50)"]:::closedLoop
-        ReplayBuf["Prioritized Experience Replay<br/>(N=30,000 Capacity • Hardened Sets)"]:::closedLoop
-        RetrainEngine["Active Defense Retraining<br/>(Incremental GBDT & DyGNN Hardening)"]:::closedLoop
+    subgraph "Pillar 3: DEFEND (Cascaded Detection Grid <30ms)"
+        C1["Tier 1: Sub-ms GBDT<br/>(0.85ms Single-Row)"] --> C2["Tier 2: Temporal GNN<br/>(Relational & Mule-Ring Detection)"]
+        C2 --> C3["Tier 3: Cognitive SAR Explainer<br/>(Async LLM FinCEN Narrative)"]
     end
 
-    ApproveFast -->|Undetected Evasions| FNMiner
-    ApproveTier2 -->|Undetected Evasions| FNMiner
-    
-    FNMiner -->|Adversarial Samples| ReplayBuf
-    FNMiner -->|Evasion Diagnostic Reward| RedAgent
-    ReplayBuf -->|Balanced Hardened Batch| RetrainEngine
-    RetrainEngine -->|Deploy Hardened Weights| Tier1
-    RetrainEngine -->|Deploy Hardened Topology| Tier2
-
-    subgraph Presentation["🖥️ PRESENTATION & EDGE SWITCH STREAM"]
-        FastAPI["FastAPI REST & WebSocket Server<br/>(1,420 TPS Streamer)"]:::storage
-        WebConsole["Fintech Defense Terminal<br/>(Next.js 14 • Radar Graph • SAR Viewer)"]:::storage
+    subgraph "CLOSED LOOP (Co-Evolution)"
+        D1["False-Negative Miner"] --> D2["Experience Replay Buffer"]
+        D2 --> D3["Red-Team RL Policy Optimizer"]
+        D3 --> B2
+        D2 --> C1
     end
 
-    Tier1 --> FastAPI
-    Tier2 --> FastAPI
-    Tier3 --> FastAPI
-    FastAPI --> WebConsole
+    A2 --> B2
+    B4 --> C1
+    C1 --> D1
 ```
 
 ---
