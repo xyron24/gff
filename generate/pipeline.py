@@ -44,13 +44,7 @@ class SimulationPipeline:
         Returns:
             Tuple of (DataFrame sorted by timestamp, metadata summary dictionary).
         """
-        n_fraud = int(n_total * fraud_ratio)
-        n_legit = n_total - n_fraud
-
-        # 1. Generate legitimate baseline
-        legit_df = self.base_generator.generate_batch(n=n_legit, time_span_days=time_span_days)
-
-        # 2. Determine attack vectors to inject
+        n_fraud = max(1, int(n_total * fraud_ratio))
         active_attacks = selected_attacks or list(INJECTOR_REGISTRY.keys())
         if not active_attacks:
             active_attacks = list(INJECTOR_REGISTRY.keys())
@@ -66,7 +60,13 @@ class SimulationPipeline:
             base_count = max(1, n_fraud // len(active_attacks))
             counts = {atk: base_count for atk in active_attacks}
 
-        # 3. Run injectors
+        actual_fraud_total = sum(counts.values())
+        actual_n_legit = max(1, n_total - actual_fraud_total)
+
+        # 1. Generate legitimate baseline to exact balance
+        legit_df = self.base_generator.generate_batch(n=actual_n_legit, time_span_days=time_span_days)
+
+        # 2. Run injectors
         fraud_dfs = []
         for atk_id in active_attacks:
             injector = get_injector(atk_id)
@@ -74,13 +74,13 @@ class SimulationPipeline:
             atk_df = injector.inject(baseline_df=legit_df, n_attacks=count)
             fraud_dfs.append(atk_df)
 
-        # 4. Merge and sort
+        # 3. Merge and sort
         all_dfs = [legit_df] + fraud_dfs
         full_df = pd.concat(all_dfs, ignore_index=True)
         full_df["timestamp"] = pd.to_datetime(full_df["timestamp"])
         full_df = full_df.sort_values("timestamp").reset_index(drop=True)
 
-        # 5. Metadata
+        # 4. Metadata
         summary = {
             "total_transactions": len(full_df),
             "legitimate_count": int((full_df["is_fraud"] == 0).sum()),
