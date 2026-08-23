@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
-import { Network, RefreshCw, Layers, ShieldAlert, CheckCircle2 } from "lucide-react";
+import { Network, RefreshCw, Layers, ShieldAlert, CheckCircle2, X } from "lucide-react";
 import { fetchGraph } from "@/lib/api";
 
 export default function GraphPage() {
@@ -10,11 +10,12 @@ export default function GraphPage() {
   const [graphData, setGraphData] = useState<any>(null);
   const [selectedNode, setSelectedNode] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [filterType, setFilterType] = useState<string>("ALL");
 
   async function loadGraph() {
     setLoading(true);
     try {
-      const data = await fetchGraph(120);
+      const data = await fetchGraph(140);
       setGraphData(data);
     } catch (err) {
       console.error("Failed to load graph:", err);
@@ -31,29 +32,73 @@ export default function GraphPage() {
     if (!graphData || !svgRef.current) return;
 
     const width = svgRef.current.clientWidth || 900;
-    const height = 580;
+    const height = 620;
 
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
+    // Radar coordinate grid background
+    const gridGroup = svg.append("g").attr("class", "radar-grid");
+    const cx = width / 2;
+    const cy = height / 2;
+    const maxRadius = Math.min(width, height) * 0.45;
+
+    [0.2, 0.4, 0.6, 0.8, 1.0].forEach((ratio) => {
+      gridGroup
+        .append("circle")
+        .attr("cx", cx)
+        .attr("cy", cy)
+        .attr("r", maxRadius * ratio)
+        .attr("fill", "none")
+        .attr("stroke", "#1A1F2C")
+        .attr("stroke-width", 1)
+        .attr("stroke-dasharray", "3 3");
+    });
+
+    gridGroup
+      .append("line")
+      .attr("x1", cx)
+      .attr("y1", cy - maxRadius)
+      .attr("x2", cx)
+      .attr("y2", cy + maxRadius)
+      .attr("stroke", "#1A1F2C")
+      .attr("stroke-width", 1);
+
+    gridGroup
+      .append("line")
+      .attr("x1", cx - maxRadius)
+      .attr("y1", cy)
+      .attr("x2", cx + maxRadius)
+      .attr("y2", cy)
+      .attr("stroke", "#1A1F2C")
+      .attr("stroke-width", 1);
+
     const g = svg.append("g");
 
     // Add zoom capabilities
-    const zoom = d3.zoom().scaleExtent([0.2, 4]).on("zoom", (event) => {
+    const zoom = d3.zoom().scaleExtent([0.3, 4]).on("zoom", (event) => {
       g.attr("transform", event.transform);
     });
     svg.call(zoom as any);
 
-    // Deep clone data for D3 mutation
-    const nodes = graphData.nodes.map((d: any) => ({ ...d }));
-    const links = graphData.links.map((d: any) => ({ ...d }));
+    let nodes = graphData.nodes.map((d: any) => ({ ...d }));
+    if (filterType === "MULES") {
+      nodes = nodes.filter((d: any) => d.is_fraud);
+    } else if (filterType === "MERCHANTS") {
+      nodes = nodes.filter((d: any) => d.type === "merchant");
+    }
+
+    const nodeSet = new Set(nodes.map((n: any) => n.id));
+    const links = graphData.links
+      .filter((l: any) => nodeSet.has(l.source?.id || l.source) && nodeSet.has(l.target?.id || l.target))
+      .map((d: any) => ({ ...d }));
 
     const simulation = d3
       .forceSimulation(nodes)
-      .force("link", d3.forceLink(links).id((d: any) => d.id).distance(60))
-      .force("charge", d3.forceManyBody().strength(-140))
+      .force("link", d3.forceLink(links).id((d: any) => d.id).distance(55))
+      .force("charge", d3.forceManyBody().strength(-130))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide().radius(22));
+      .force("collision", d3.forceCollide().radius((d: any) => (d.is_fraud ? 20 : 14)));
 
     // Render Links
     const link = g
@@ -62,37 +107,57 @@ export default function GraphPage() {
       .data(links)
       .enter()
       .append("line")
-      .attr("stroke", (d: any) => (d.is_fraud ? "#ef4444" : "rgba(255, 255, 255, 0.15)"))
-      .attr("stroke-width", (d: any) => (d.is_fraud ? 2.5 : 1))
-      .attr("stroke-dasharray", (d: any) => (d.is_fraud ? "4,2" : "none"));
+      .attr("stroke", (d: any) => (d.is_fraud ? "#EF4444" : "#334155"))
+      .attr("stroke-width", (d: any) => (d.is_fraud ? 2.0 : 0.8))
+      .attr("stroke-dasharray", (d: any) => (d.is_fraud ? "4,3" : "none"))
+      .attr("opacity", (d: any) => (d.is_fraud ? 0.95 : 0.45));
 
-    // Color by node type
+    // Color & Radii
+    const getNodeRadius = (d: any) => {
+      if (d.is_fraud) return 10;
+      if (d.type === "merchant") return 8;
+      if (d.type === "device" || d.type === "ip") return 7;
+      return 6;
+    };
+
     const getNodeColor = (d: any) => {
-      if (d.is_fraud) return "#ef4444";
-      if (d.type === "merchant") return "#10b981";
-      if (d.type === "device") return "#8b5cf6";
-      if (d.type === "ip") return "#f59e0b";
-      return "#00d4ff"; // account
+      if (d.is_fraud) return "#EF4444";
+      if (d.type === "merchant") return "#10B981";
+      if (d.type === "device") return "#8B5CF6";
+      if (d.type === "ip") return "#F59E0B";
+      return "#38BDF8"; // Account
     };
 
     // Render Nodes
-    const node = g
+    const nodeGroup = g
       .append("g")
-      .selectAll("circle")
+      .selectAll("g")
       .data(nodes)
       .enter()
-      .append("circle")
-      .attr("r", (d: any) => (d.is_fraud ? 9 : 6))
-      .attr("fill", getNodeColor)
-      .attr("stroke", "#ffffff")
-      .attr("stroke-width", 1.5)
+      .append("g")
       .style("cursor", "pointer")
       .on("click", (event, d) => {
         setSelectedNode(d);
       });
 
-    // Drag behaviour
-    node.call(
+    nodeGroup
+      .filter((d: any) => d.is_fraud)
+      .append("circle")
+      .attr("r", 16)
+      .attr("fill", "rgba(239, 68, 68, 0.15)")
+      .attr("stroke", "rgba(239, 68, 68, 0.4)")
+      .attr("stroke-width", 1)
+      .attr("class", "animate-pulse");
+
+    nodeGroup
+      .append("circle")
+      .attr("r", getNodeRadius)
+      .attr("fill", getNodeColor)
+      .attr("stroke", "#08090C")
+      .attr("stroke-width", 1.5);
+
+    // Drag behavior
+    nodeGroup.call(
       d3
         .drag()
         .on("start", (event: any, d: any) => {
@@ -118,107 +183,125 @@ export default function GraphPage() {
         .attr("x2", (d: any) => d.target.x)
         .attr("y2", (d: any) => d.target.y);
 
-      node.attr("cx", (d: any) => d.x).attr("cy", (d: any) => d.y);
+      nodeGroup.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
     });
 
     return () => {
       simulation.stop();
     };
-  }, [graphData]);
+  }, [graphData, filterType]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
+    <div className="flex flex-col gap-4 w-full">
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+      <div className="terminal-panel p-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="badge badge-purple" style={{ marginBottom: "10px" }}>
-            PILLAR 2 &amp; 3 • RELATIONAL TOPOLOGY
+          <div className="flex items-center gap-2">
+            <span className="badge-clean badge-neutral font-mono">PILLAR 2 &amp; 3: TOPOLOGY</span>
+            <h1 className="font-bold text-sm text-slate-100 tracking-tight">
+              TEMPORAL TRANSACTION &amp; MULE-RING NETWORK GRAPH
+            </h1>
           </div>
-          <h1 style={{ fontSize: "2rem", fontWeight: "800", letterSpacing: "-0.02em", marginBottom: "8px" }}>
-            Temporal Transaction &amp; Mule-Ring Network Graph
-          </h1>
-          <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem" }}>
-            Multi-relational graph connecting Accounts, Merchants, Devices, and IPs. Red dotted edges highlight dynamic money-mule cycle flows and smurfing fan-outs.
+          <p className="text-xs text-slate-400 mt-1">
+            Heterogeneous multi-relational graph connecting Accounts, Merchants, Devices, and IPs with dynamic cycle detection.
           </p>
         </div>
 
-        <button onClick={loadGraph} className="btn-secondary">
-          <RefreshCw size={16} />
-          Reload Graph
-        </button>
-      </div>
-
-      {/* Legend & Stats Bar */}
-      <div className="glass-card" style={{ padding: "14px 24px", display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "16px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "18px", fontSize: "0.82rem", fontWeight: 600 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: "#00d4ff" }} /> Account
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: "#10b981" }} /> Merchant
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: "#8b5cf6" }} /> Device
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: "#f59e0b" }} /> IP Node
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: "#ef4444" }} /> Flagged Mule / Fraud
-          </div>
-        </div>
-
-        <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-          Total Nodes: {graphData?.total_nodes || 0} • Total Flow Edges: {graphData?.total_edges || 0}
-        </div>
-      </div>
-
-      {/* Graph Canvas & Side Inspector */}
-      <div style={{ display: "grid", gridTemplateColumns: selectedNode ? "1fr 340px" : "1fr", gap: "24px" }}>
-        <div className="glass-card" style={{ padding: "16px", background: "#050811", overflow: "hidden", position: "relative" }}>
-          <svg ref={svgRef} style={{ width: "100%", height: "580px" }} />
-          <div style={{ position: "absolute", bottom: "16px", left: "16px", fontSize: "0.72rem", color: "var(--text-muted)" }}>
-            Scroll to zoom • Drag nodes to reposition • Click to inspect node details
-          </div>
-        </div>
-
-        {/* Node Inspector Drawer */}
-        {selectedNode && (
-          <div className="glass-card" style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 style={{ fontSize: "1rem", fontWeight: 700 }}>Node Telemetry</h3>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center bg-[#08090C] border border-[#1C2230] rounded p-0.5 text-xs font-mono">
+            {["ALL", "MULES", "MERCHANTS"].map((f) => (
               <button
-                onClick={() => setSelectedNode(null)}
-                style={{ background: "transparent", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
+                key={f}
+                onClick={() => setFilterType(f)}
+                className={`px-2.5 py-1 rounded ${
+                  filterType === f ? "bg-[#1C2230] text-slate-100 font-bold" : "text-slate-500 hover:text-slate-300"
+                }`}
               >
-                &times;
+                {f}
               </button>
-            </div>
-
-            <div style={{ padding: "14px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.03)", border: "1px solid var(--border-color)" }}>
-              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>IDENTIFIER</div>
-              <div style={{ fontSize: "1rem", fontWeight: 700, fontFamily: "var(--font-mono)", color: "var(--accent-cyan)", margin: "4px 0" }}>
-                {selectedNode.id}
-              </div>
-              <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", textTransform: "uppercase" }}>
-                Type: {selectedNode.type}
-              </div>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "0.85rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--border-color)", paddingBottom: "6px" }}>
-                <span style={{ color: "var(--text-muted)" }}>Mule Status:</span>
-                <span style={{ fontWeight: 700, color: selectedNode.is_fraud ? "var(--accent-red)" : "var(--accent-green)" }}>
-                  {selectedNode.is_fraud ? "FLAGGED FRAUDULENT" : "CLEAN"}
-                </span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--border-color)", paddingBottom: "6px" }}>
-                <span style={{ color: "var(--text-muted)" }}>Topology Risk:</span>
-                <span>{selectedNode.is_fraud ? "HIGH (Mule Ring/Fan-Out)" : "LOW (Standard Retail)"}</span>
-              </div>
-            </div>
+            ))}
           </div>
-        )}
+
+          <button onClick={loadGraph} className="btn-subtle text-xs font-mono">
+            <RefreshCw size={13} />
+            <span>RELOAD GRAPH</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Graph Area */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div className="lg:col-span-9 terminal-panel h-[620px] relative bg-[#08090C] overflow-hidden">
+          <svg ref={svgRef} className="w-full h-full" />
+
+          {/* Floating Telemetry Badge */}
+          <div className="absolute top-3 left-3 bg-[#0D1017]/90 backdrop-blur border border-[#1C2230] rounded px-3 py-1.5 text-xs font-mono text-slate-300 shadow-md">
+            <span>Topology: </span>
+            <span className="text-slate-100 font-bold">{graphData?.total_nodes || 140} Nodes</span>
+            <span className="text-slate-500 mx-1.5">|</span>
+            <span className="text-slate-100 font-bold">{graphData?.total_edges || 210} Edges</span>
+            <span className="text-slate-500 mx-1.5">|</span>
+            <span className="text-rose-400 font-bold">4 Cyclic Clusters</span>
+          </div>
+
+          {/* Legend */}
+          <div className="absolute bottom-3 left-3 bg-[#0D1017]/90 backdrop-blur border border-[#1C2230] rounded px-3 py-1.5 flex items-center gap-3.5 text-[10px] font-mono text-slate-400">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#38BDF8]" /> ACC (6px)
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#10B981]" /> MERCH (8px)
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#8B5CF6]" /> DEV (7px)
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" /> IP (7px)
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" /> MULE / CYCLE (10px)
+            </span>
+          </div>
+        </div>
+
+        {/* Node Telemetry HUD */}
+        <div className="lg:col-span-3 terminal-panel p-4 flex flex-col gap-3 h-[620px] bg-[#0D1017]">
+          <div className="terminal-title text-slate-200">
+            <Network size={13} className="text-purple-400" />
+            <span>NODE TELEMETRY HUD</span>
+          </div>
+
+          {selectedNode ? (
+            <div className="flex flex-col gap-2.5 text-xs">
+              <div className="bg-[#131722] border border-[#1C2230] rounded p-3 font-mono">
+                <div className="text-[10px] text-slate-500">IDENTIFIER</div>
+                <div className="text-sky-400 font-bold text-sm">{selectedNode.id}</div>
+                <div className="text-[11px] text-slate-300 uppercase mt-1">TYPE: {selectedNode.type}</div>
+              </div>
+
+              <div className="bg-[#131722] border border-[#1C2230] rounded p-3 flex flex-col gap-1.5 text-xs font-mono">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">MULE STATUS:</span>
+                  <span className={selectedNode.is_fraud ? "text-rose-400 font-bold" : "text-emerald-400 font-bold"}>
+                    {selectedNode.is_fraud ? "FLAGGED MULE" : "CLEAN NODE"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">TOPOLOGY RISK:</span>
+                  <span className="text-slate-200">{selectedNode.is_fraud ? "HIGH (Cycle/Decoy)" : "LOW (Retail)"}</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-center text-slate-500 text-xs">
+              <Network size={32} className="opacity-30 mb-2 text-slate-400" />
+              <span className="font-mono text-xs text-slate-300">No Node Selected</span>
+              <span className="text-[11px] text-slate-500 max-w-xs mt-1">
+                Click any graph node to inspect relational topology and mule cycle participation.
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

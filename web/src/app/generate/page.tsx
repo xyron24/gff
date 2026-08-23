@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Radio, Play, Pause, RefreshCw, FileCode, CheckCircle, AlertTriangle, ShieldAlert } from "lucide-react";
+import { Radio, Play, Pause, RefreshCw, FileCode, CheckCircle, AlertTriangle, ShieldAlert, X } from "lucide-react";
 import { triggerGenerate, getWebSocketUrl } from "@/lib/api";
 
 export default function GeneratePage() {
@@ -44,7 +44,6 @@ export default function GeneratePage() {
         n_transactions: batchCount,
         fraud_ratio: fraudRatio,
       });
-      // Prepend generated transactions to feed
       const formatted = res.transactions.map((t: any) => ({
         timestamp: t.timestamp,
         transaction: t,
@@ -64,207 +63,167 @@ export default function GeneratePage() {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+    <div className="flex flex-col gap-4 w-full">
+      {/* Header Bar */}
+      <div className="terminal-panel p-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="badge badge-purple" style={{ marginBottom: "10px" }}>
-            PILLAR 2 • ADVERSARIAL SIMULATION
+          <div className="flex items-center gap-2">
+            <span className="badge-clean badge-telemetry font-mono">PILLAR 2: GENERATE</span>
+            <h1 className="font-bold text-sm text-slate-100 tracking-tight">
+              ADVERSARIAL SIMULATION &amp; ISO 20022 PAYLOAD CONTROLLER
+            </h1>
           </div>
-          <h1 style={{ fontSize: "2rem", fontWeight: "800", letterSpacing: "-0.02em", marginBottom: "8px" }}>
-            Real-Time Settlement & Attack Injection Stream
-          </h1>
-          <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem" }}>
-            Synthesizing realistic baseline financial flows and adversarial GenAI attack payloads with ISO 20022 formatting.
+          <p className="text-xs text-slate-400 mt-1">
+            Generate empirical Poisson arrival baseline payment streams and inject 12 GenAI attack vectors with ISO 20022 formatting.
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: "12px" }}>
-          <button
-            onClick={() => setStreamActive(!streamActive)}
-            className={streamActive ? "btn-secondary" : "btn-primary"}
+        <button
+          onClick={() => setStreamActive(!streamActive)}
+          className="btn-subtle text-xs font-mono"
+        >
+          {streamActive ? <Pause size={13} /> : <Play size={13} />}
+          <span>{streamActive ? "PAUSE LIVE STREAM" : "RESUME LIVE STREAM"}</span>
+        </button>
+      </div>
+
+      {/* Control Configuration Panel */}
+      <div className="terminal-panel p-4 grid grid-cols-1 sm:grid-cols-3 gap-4 items-center text-xs">
+        <div>
+          <div className="flex justify-between font-mono text-[10px] text-slate-400 mb-1.5 uppercase">
+            <span>FRAUD INJECTION RATIO</span>
+            <span className="text-[#FF5F00] font-bold">{(fraudRatio * 100).toFixed(0)}%</span>
+          </div>
+          <input
+            type="range"
+            min="0.05"
+            max="0.50"
+            step="0.05"
+            value={fraudRatio}
+            onChange={(e) => setFraudRatio(parseFloat(e.target.value))}
+            className="w-full accent-[#FF5F00]"
+          />
+        </div>
+
+        <div>
+          <div className="font-mono text-[10px] text-slate-400 mb-1.5 uppercase">BATCH INJECTION SIZE</div>
+          <select
+            value={batchCount}
+            onChange={(e) => setBatchCount(parseInt(e.target.value))}
+            className="w-full bg-[#131722] border border-[#1C2230] rounded px-3 py-1.5 text-xs font-mono text-slate-200 outline-none focus:border-[#FF5F00]"
           >
-            {streamActive ? <Pause size={16} /> : <Play size={16} />}
-            {streamActive ? "Pause Live Stream" : "Resume Stream"}
+            <option value="25">25 Transactions</option>
+            <option value="50">50 Transactions</option>
+            <option value="100">100 Transactions</option>
+            <option value="250">250 Transactions</option>
+          </select>
+        </div>
+
+        <div className="flex items-end">
+          <button
+            onClick={handleBatchGenerate}
+            disabled={isGenerating}
+            className="btn-ember w-full justify-center py-2 text-xs font-mono font-bold uppercase"
+          >
+            <RefreshCw size={13} className={isGenerating ? "animate-spin" : ""} />
+            <span>{isGenerating ? "Injecting Payload..." : "Inject Attack Batch"}</span>
           </button>
         </div>
       </div>
 
-      {/* Control Panel Card */}
-      <div className="glass-card" style={{ padding: "24px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "24px", alignItems: "center" }}>
-          <div>
-            <label style={{ fontSize: "0.82rem", color: "var(--text-muted)", fontWeight: 600, display: "block", marginBottom: "8px" }}>
-              FRAUD INJECTION RATIO: {(fraudRatio * 100).toFixed(0)}%
-            </label>
-            <input
-              type="range"
-              min="0.05"
-              max="0.50"
-              step="0.05"
-              value={fraudRatio}
-              onChange={(e) => setFraudRatio(parseFloat(e.target.value))}
-              style={{ width: "100%", accentColor: "var(--accent-cyan)" }}
-            />
+      {/* Live Ledger Table & Drawer */}
+      <div className={`grid ${selectedXmlTxn ? "grid-cols-1 lg:grid-cols-12" : "grid-cols-1"} gap-3`}>
+        <div className={`${selectedXmlTxn ? "lg:col-span-7" : "w-full"} terminal-panel flex flex-col h-[640px]`}>
+          <div className="terminal-header">
+            <div className="terminal-title">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>TRANSACTION LEDGER FEED ({streamEvents.length} BUFFERED)</span>
+            </div>
+            <span className="font-mono text-[10px] text-slate-500">FORMAT: ISO 20022 XML / JSON</span>
           </div>
 
-          <div>
-            <label style={{ fontSize: "0.82rem", color: "var(--text-muted)", fontWeight: 600, display: "block", marginBottom: "8px" }}>
-              BATCH SIZE: {batchCount} TXNS
-            </label>
-            <select
-              value={batchCount}
-              onChange={(e) => setBatchCount(parseInt(e.target.value))}
-              style={{
-                width: "100%",
-                padding: "8px 12px",
-                borderRadius: "8px",
-                background: "rgba(255, 255, 255, 0.04)",
-                border: "1px solid var(--border-color)",
-                color: "var(--text-primary)",
-                outline: "none",
-              }}
-            >
-              <option value="25">25 Transactions</option>
-              <option value="50">50 Transactions</option>
-              <option value="100">100 Transactions</option>
-              <option value="250">250 Transactions</option>
-            </select>
-          </div>
+          <div className="flex-1 overflow-y-auto">
+            <table className="terminal-table">
+              <thead>
+                <tr>
+                  <th>TXN ID</th>
+                  <th>TIMESTAMP</th>
+                  <th>ORIGIN &rarr; DEST</th>
+                  <th className="text-right">AMOUNT</th>
+                  <th>RAIL</th>
+                  <th>DECISION</th>
+                  <th>ACTION</th>
+                </tr>
+              </thead>
+              <tbody>
+                {streamEvents.map((evt, idx) => {
+                  const txn = evt.transaction || {};
+                  const det = evt.detection || {};
+                  const isBlock = det.decision === "BLOCK" || txn.is_fraud === 1;
 
-          <div style={{ display: "flex", alignItems: "flex-end", height: "100%" }}>
-            <button
-              onClick={handleBatchGenerate}
-              disabled={isGenerating}
-              className="btn-primary"
-              style={{ width: "100%", justifyContent: "center" }}
-            >
-              <RefreshCw size={16} className={isGenerating ? "animate-spin" : ""} />
-              {isGenerating ? "Generating..." : "Inject Attack Batch"}
-            </button>
+                  return (
+                    <tr
+                      key={txn.txn_id || idx}
+                      className={isBlock ? "border-l-2 border-l-rose-500 bg-rose-950/15" : "hover:bg-[#131722]"}
+                    >
+                      <td className="font-mono text-slate-200 font-bold text-xs">{txn.txn_id}</td>
+                      <td className="font-mono text-[10px] text-slate-500">
+                        {txn.timestamp ? txn.timestamp.slice(11, 19) : "--:--:--"}
+                      </td>
+                      <td className="font-mono text-[11px]">
+                        <span className="text-slate-300">{txn.sender_account}</span>
+                        <span className="text-slate-500 mx-1">&rarr;</span>
+                        <span className="text-slate-400">{txn.receiver_account}</span>
+                      </td>
+                      <td className="text-right font-mono font-bold text-slate-100 text-xs">
+                        ${Number(txn.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </td>
+                      <td>
+                        <span className="badge-clean badge-neutral text-[9px]">
+                          {txn.channel || "ONLINE"}
+                        </span>
+                      </td>
+                      <td>
+                        {isBlock ? (
+                          <span className="badge-clean badge-threat">BLOCK</span>
+                        ) : (
+                          <span className="badge-clean badge-approved">APPROVE</span>
+                        )}
+                      </td>
+                      <td>
+                        <button
+                          onClick={() => setSelectedXmlTxn(evt)}
+                          className="text-[10px] font-mono text-sky-400 hover:underline"
+                        >
+                          ISO XML
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
-      </div>
 
-      {/* Main Stream Table */}
-      <div style={{ display: "grid", gridTemplateColumns: selectedXmlTxn ? "1.3fr 1fr" : "1fr", gap: "24px" }}>
-        <div className="glass-card" style={{ padding: "20px", overflowX: "auto" }}>
-          <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
-            <span className="status-dot" />
-            Live Settlement Ledger Stream ({streamEvents.length} transactions buffered)
-          </h3>
-
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
-            <thead>
-              <tr style={{ borderBottom: "1px solid var(--border-color)", color: "var(--text-muted)", textAlign: "left" }}>
-                <th style={{ padding: "10px" }}>TXN ID</th>
-                <th style={{ padding: "10px" }}>TIMESTAMP</th>
-                <th style={{ padding: "10px" }}>ORIGINATOR &rarr; BENEFICIARY</th>
-                <th style={{ padding: "10px" }}>AMOUNT</th>
-                <th style={{ padding: "10px" }}>RAIL</th>
-                <th style={{ padding: "10px" }}>DECISION</th>
-                <th style={{ padding: "10px" }}>ACTION</th>
-              </tr>
-            </thead>
-            <tbody>
-              {streamEvents.map((evt, idx) => {
-                const txn = evt.transaction || {};
-                const det = evt.detection || {};
-                const isBlock = det.decision === "BLOCK" || txn.is_fraud === 1;
-
-                return (
-                  <tr
-                    key={txn.txn_id || idx}
-                    style={{
-                      borderBottom: "1px solid rgba(255,255,255,0.04)",
-                      background: isBlock ? "rgba(239, 68, 68, 0.05)" : "transparent",
-                    }}
-                  >
-                    <td style={{ padding: "12px 10px", fontFamily: "var(--font-mono)", fontWeight: 700, color: isBlock ? "var(--accent-red)" : "var(--text-primary)" }}>
-                      {txn.txn_id}
-                    </td>
-                    <td style={{ padding: "12px 10px", color: "var(--text-muted)", fontSize: "0.78rem" }}>
-                      {txn.timestamp ? txn.timestamp.slice(11, 19) : "--:--:--"}
-                    </td>
-                    <td style={{ padding: "12px 10px" }}>
-                      <div style={{ fontWeight: 600 }}>{txn.sender_account}</div>
-                      <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>&rarr; {txn.receiver_account}</div>
-                    </td>
-                    <td style={{ padding: "12px 10px", fontWeight: 700 }}>
-                      ${Number(txn.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </td>
-                    <td style={{ padding: "12px 10px" }}>
-                      <span className="badge badge-purple" style={{ fontSize: "0.68rem" }}>
-                        {txn.channel || "ONLINE"}
-                      </span>
-                    </td>
-                    <td style={{ padding: "12px 10px" }}>
-                      {isBlock ? (
-                        <span className="badge badge-red" style={{ fontSize: "0.7rem" }}>
-                          BLOCK ({((det.risk_score || 0.95) * 100).toFixed(0)}%)
-                        </span>
-                      ) : (
-                        <span className="badge badge-green" style={{ fontSize: "0.7rem" }}>
-                          APPROVE ({det.total_latency_ms || 0.8}ms)
-                        </span>
-                      )}
-                    </td>
-                    <td style={{ padding: "12px 10px" }}>
-                      <button
-                        onClick={() => setSelectedXmlTxn(evt)}
-                        style={{
-                          background: "rgba(0, 212, 255, 0.1)",
-                          border: "1px solid rgba(0, 212, 255, 0.3)",
-                          color: "var(--accent-cyan)",
-                          padding: "4px 8px",
-                          borderRadius: "4px",
-                          fontSize: "0.75rem",
-                          cursor: "pointer",
-                        }}
-                      >
-                        ISO XML
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* ISO XML Drawer */}
+        {/* ISO XML Inspector Drawer */}
         {selectedXmlTxn && (
-          <div className="glass-card" style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "14px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 style={{ fontSize: "1rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "8px" }}>
-                <FileCode size={18} color="var(--accent-cyan)" />
-                ISO 20022 XML Message Inspector
-              </h3>
-              <button
-                onClick={() => setSelectedXmlTxn(null)}
-                style={{ background: "transparent", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
-              >
-                &times;
+          <div className="lg:col-span-5 terminal-panel flex flex-col h-[640px] bg-[#0A0D13]">
+            <div className="terminal-header">
+              <div className="terminal-title text-slate-200">
+                <FileCode size={13} className="text-sky-400" />
+                <span>ISO 20022 XML PAYLOAD</span>
+              </div>
+              <button onClick={() => setSelectedXmlTxn(null)} className="text-slate-500 hover:text-slate-200">
+                <X size={14} />
               </button>
             </div>
 
-            <div style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>
-              Message Type: <span style={{ color: "var(--accent-cyan)", fontWeight: 700 }}>{selectedXmlTxn.transaction?.iso_message_type || "pacs.008.001.08"}</span>
+            <div className="p-3 border-b border-[#1C2230] font-mono text-xs text-slate-400">
+              MESSAGE TYPE: <span className="text-sky-400 font-bold">{selectedXmlTxn.transaction?.iso_message_type || "pacs.008.001.08"}</span>
             </div>
 
-            <pre
-              style={{
-                background: "#04060c",
-                border: "1px solid var(--border-color)",
-                borderRadius: "8px",
-                padding: "16px",
-                fontSize: "0.75rem",
-                overflowX: "auto",
-                maxHeight: "500px",
-                color: "#7dd3fc",
-                lineHeight: "1.4",
-              }}
-            >
+            <pre className="flex-1 p-3 font-mono text-[10px] text-sky-300 overflow-y-auto leading-relaxed bg-[#08090C]">
               {selectedXmlTxn.iso_xml || "XML Payload Unavailable"}
             </pre>
           </div>
