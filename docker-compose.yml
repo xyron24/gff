@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  ai-defense-lab:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mastercard-ai-defense-lab
+    ports:
+      - "8000:8000"  # FastAPI Backend & WebSocket Streamer
+      - "3000:3000"  # Next.js Fintech Web Dashboard
+    environment:
+      - APP_ENV=production
+      - PORT=8000
+      - HOST=0.0.0.0
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+    restart: unless-stopped
