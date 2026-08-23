@@ -8,6 +8,7 @@ from generate.iso20022_formatter import (
     inspect_unicode_anomalies,
 )
 from generate.graph_builder import TransactionGraphBuilder
+from generate.pipeline import SimulationPipeline
 
 __all__ = [
     "BaseTransactionGenerator",
@@ -16,4 +17,5 @@ __all__ = [
     "parse_iso_message",
     "inspect_unicode_anomalies",
     "TransactionGraphBuilder",
+    "SimulationPipeline",
 ]
