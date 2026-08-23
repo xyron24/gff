@@ -31,7 +31,8 @@ def format_pacs008(txn: Union[PaymentTransaction, Dict[str, Any]]) -> str:
     else:
         ts_str = str(ts)
 
-    currency = data.get("currency", "USD")
+    raw_curr = data.get("currency", "USD")
+    currency = raw_curr.value if hasattr(raw_curr, "value") else str(raw_curr).replace("CurrencyCode.", "")
     amount = f"{float(data.get('amount', 0.0)):.2f}"
     msg_id = f"MSG-{data.get('txn_id', '00000')}"
     e2e_id = f"E2E-{data.get('txn_id', '00000')}"
@@ -122,7 +123,8 @@ def format_pain001(txn: Union[PaymentTransaction, Dict[str, Any]]) -> str:
     ts = data.get("timestamp")
     ts_str = ts.strftime("%Y-%m-%dT%H:%M:%SZ") if isinstance(ts, datetime) else str(ts)
 
-    currency = data.get("currency", "USD")
+    raw_curr = data.get("currency", "USD")
+    currency = raw_curr.value if hasattr(raw_curr, "value") else str(raw_curr).replace("CurrencyCode.", "")
     amount = f"{float(data.get('amount', 0.0)):.2f}"
     msg_id = f"PAIN-{data.get('txn_id', '00000')}"
 
@@ -202,7 +204,7 @@ def parse_iso_message(xml_string: str) -> Dict[str, Any]:
         if "}" in elem.tag:
             elem.tag = elem.tag.split("}", 1)[1]
 
-    extracted = {
+    extracted: Dict[str, Any] = {
         "msg_id": root.findtext(".//MsgId"),
         "created_at": root.findtext(".//CreDtTm"),
         "txn_id": root.findtext(".//TxId") or root.findtext(".//EndToEndId"),
@@ -219,11 +221,16 @@ def parse_iso_message(xml_string: str) -> Dict[str, Any]:
         "mcc": root.findtext(".//SplmtryData//MccCode"),
     }
 
-    # Extract amount & currency
-    amt_elem = root.find(".//IntrBkSttlmAmt") or root.find(".//InstdAmt")
-    if amt_elem is not None:
-        extracted["amount"] = float(amt_elem.text) if amt_elem.text else 0.0
-        extracted["currency"] = amt_elem.get("Ccy", "USD")
+    # Extract amount & currency by inspecting elements directly
+    for elem in root.iter():
+        if elem.tag in ["IntrBkSttlmAmt", "InstdAmt"]:
+            if elem.text:
+                try:
+                    extracted["amount"] = float(elem.text.strip())
+                except ValueError:
+                    pass
+            extracted["currency"] = elem.attrib.get("Ccy", "USD")
+            break
 
     return extracted
 
