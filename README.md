@@ -14,7 +14,7 @@ The system closes the security loop across three foundational pillars: **Identif
 
 ---
 
-## 📊 Empirical Benchmarks & Performance Telemetry
+## Empirical Benchmarks & Performance Telemetry
 
 Evaluated on standard edge switch CPU infrastructure without specialized GPU hardware:
 
@@ -31,7 +31,7 @@ Evaluated on standard edge switch CPU infrastructure without specialized GPU har
 
 ---
 
-## 🏛️ System Architecture
+## System Architecture
 
 ```mermaid
 graph TB
@@ -64,7 +64,7 @@ graph TB
 
 ---
 
-## 🛡️ Pillar 1: Threat Taxonomy & Per-Attack Efficacy
+## Pillar 1: Threat Taxonomy & Per-Attack Efficacy
 
 Our taxonomy maps 12 distinct GenAI payment threat vectors with baseline vs co-evolution hardened catch rates:
 
@@ -85,7 +85,7 @@ Our taxonomy maps 12 distinct GenAI payment threat vectors with baseline vs co-e
 
 ---
 
-## ⚡ Sub-30ms Detection Grid & ISO 20022 Payloads
+## Sub-30ms Detection Grid & ISO 20022 Payloads
 
 ### 1. ISO 20022 Financial Clearing Payloads
 Transactions serialize into standard `pacs.008.001.08` and `pain.001.001.09` XML schemas with automatic Unicode anomaly scanners for detecting homoglyphs and zero-width code points:
@@ -121,7 +121,7 @@ Transactions serialize into standard `pacs.008.001.08` and `pain.001.001.09` XML
 
 ---
 
-## 🔄 Closed-Loop Reinforcement Learning Mathematics
+## Closed-Loop Reinforcement Learning Mathematics
 
 The co-evolution loop couples Red-Team policy optimization with Blue-Team experience replay retraining:
 
@@ -135,7 +135,7 @@ The co-evolution loop couples Red-Team policy optimization with Blue-Team experi
 
 ---
 
-## 🌐 API & WebSocket Specifications
+## API & WebSocket Specifications
 
 ### REST Endpoints
 - `GET /health`: Component status, model readiness, replay buffer size.
@@ -153,7 +153,7 @@ The co-evolution loop couples Red-Team policy optimization with Blue-Team experi
 
 ---
 
-## 🚀 Quick Start & Installation
+## Quick Start & Installation
 
 ### 1. Local Setup
 ```bash
@@ -192,7 +192,7 @@ docker-compose up --build
 
 ---
 
-## 📂 Repository Layout
+## Repository Layout
 
 ```
 mastercard-ai-defense-lab/
@@ -236,5 +236,5 @@ mastercard-ai-defense-lab/
 
 ---
 
-## ⚖️ License
+## License
 Apache 2.0 License. Built for the **Mastercard Innovation Challenge 2026** at the **Global Fintech Fest (GFF) 2026 (Jio World Centre, Mumbai)**.
